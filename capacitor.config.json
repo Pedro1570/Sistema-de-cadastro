@@ -1,0 +1,24 @@
+{
+  "appId": "br.com.cadastroeleitoral.app",
+  "appName": "Cadastro Eleitoral",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 2000,
+      "backgroundColor": "#1a3a6b",
+      "showSpinner": true,
+      "spinnerColor": "#4a9fd4"
+    }
+  },
+  "android": {
+    "buildOptions": {
+      "keystorePath": "eleitoral.keystore",
+      "keystoreAlias": "eleitoral",
+      "releaseType": "APK"
+    }
+  }
+}

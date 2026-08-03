@@ -1,0 +1,1371 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0f2447">
+<title>Sistema de Cadastro</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --azul:#0f2447;--azul2:#1e3d6e;--azul3:#2d5fa8;
+  --ouro:#c9a84c;--ouro2:#f0c96a;
+  --verde:#16a34a;--vermelho:#dc2626;--amarelo:#f59e0b;
+  --cinza:#64748b;--cinza2:#e2e8f0;
+  --bg:#f0f4fa;--card:#ffffff;--texto:#0f172a;--texto2:#475569;
+  --shadow:0 2px 12px rgba(15,36,71,.10);--r:12px;
+}
+html,body{height:100%;background:var(--bg);color:var(--texto)}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:14px}
+#app{max-width:430px;margin:0 auto;min-height:100vh;background:var(--bg);display:flex;flex-direction:column}
+
+.screen{display:none;flex-direction:column;flex:1;min-height:100vh}
+.screen.active{display:flex}
+
+.topbar{background:var(--azul);color:#fff;flex-shrink:0;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.topbar-inner{padding:12px 16px;display:flex;align-items:center;gap:10px}
+.topbar-title{font-size:15px;font-weight:700;flex:1;letter-spacing:.3px}
+.topbar-sub{font-size:10px;color:#93bbf0;margin-top:1px}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;transition:background .4s}
+.dot-online{background:#22c55e}.dot-offline{background:var(--amarelo)}
+
+.tab-nav{display:flex;background:var(--azul2);border-bottom:2px solid var(--ouro);overflow-x:auto;flex-shrink:0}
+.tab-nav::-webkit-scrollbar{display:none}
+.tab-btn{flex:1;min-width:72px;padding:10px 4px 8px;background:none;border:none;color:rgba(255,255,255,.55);font-size:10px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s;letter-spacing:.3px;text-transform:uppercase}
+.tab-btn.active{color:#fff;border-bottom-color:var(--ouro)}
+.tab-icon{font-size:17px}
+.tab-content{display:none;flex-direction:column;flex:1;overflow-y:auto}
+.tab-content.active{display:flex}
+
+.content{flex:1;padding:14px;overflow-y:auto;padding-bottom:24px}
+
+.btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:13px 16px;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;width:100%;transition:transform .1s,opacity .1s}
+.btn:active{transform:scale(.98);opacity:.85}
+.btn:disabled{opacity:.5;cursor:default}
+.btn-primary{background:var(--azul);color:#fff}
+.btn-gold{background:linear-gradient(135deg,var(--ouro),var(--ouro2));color:var(--azul);font-weight:800}
+.btn-ghost{background:transparent;border:1.5px solid var(--cinza2);color:var(--texto2)}
+.btn-sm{padding:8px 12px;font-size:12px;width:auto;border-radius:8px}
+
+/* ══════════ NOVO: Botão de excluir ══════════ */
+.btn-del{background:transparent;border:1.5px solid #fecaca;color:var(--vermelho);padding:7px 10px;font-size:12px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;font-weight:700;font-family:inherit;transition:all .15s;flex-shrink:0}
+.btn-del:hover{background:var(--vermelho);color:#fff;border-color:var(--vermelho)}
+.btn-del:active{transform:scale(.95)}
+
+/* ══════════ NOVO: Botão de resetar senha ══════════ */
+.btn-key{background:transparent;border:1.5px solid #fde68a;color:#92400e;padding:7px 10px;font-size:12px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;font-weight:700;font-family:inherit;transition:all .15s;flex-shrink:0}
+.btn-key:hover{background:var(--amarelo);color:#fff;border-color:var(--amarelo)}
+.btn-key:active{transform:scale(.95)}
+
+.form-group{margin-bottom:14px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.form-label{font-size:10px;color:var(--texto2);margin-bottom:5px;display:block;font-weight:800;text-transform:uppercase;letter-spacing:.6px}
+.form-input,.form-select,.form-textarea{width:100%;padding:11px 13px;border:1.5px solid var(--cinza2);border-radius:9px;font-size:14px;background:#fff;color:var(--texto);font-family:inherit;transition:border-color .15s,box-shadow .15s;appearance:none;-webkit-appearance:none}
+.form-input:focus,.form-select:focus,.form-textarea:focus{outline:none;border-color:var(--azul3);box-shadow:0 0 0 3px rgba(45,95,168,.12)}
+.form-textarea{resize:vertical;min-height:90px}
+.form-select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23475569' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:34px}
+.section-label{font-size:10px;font-weight:800;color:var(--cinza);text-transform:uppercase;letter-spacing:1.2px;padding:12px 0 8px;border-top:1px solid var(--cinza2);margin-top:4px;display:flex;align-items:center;gap:6px}
+
+.alert{padding:10px 14px;border-radius:9px;font-size:13px;margin-bottom:12px}
+.alert-erro{background:#fee2e2;color:#991b1b;border:1px solid #fecaca}
+.alert-success{background:#dcfce7;color:#166534;border:1px solid #bbf7d0}
+.alert-info{background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe}
+
+.card{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:14px;margin-bottom:12px;border:1px solid rgba(0,0,0,.04)}
+.card-title{font-size:13px;font-weight:700;color:var(--texto);margin-bottom:10px}
+
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.stat-card{background:var(--card);border-radius:var(--r);padding:14px;box-shadow:var(--shadow);text-align:center;border:1px solid rgba(0,0,0,.04)}
+.stat-num{font-size:32px;font-weight:800;color:var(--azul);line-height:1}
+.stat-label{font-size:11px;color:var(--cinza);margin-top:4px;font-weight:600}
+
+.chart-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.chart-label{font-size:12px;color:var(--texto2);min-width:90px;max-width:90px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right;flex-shrink:0}
+.chart-bar-bg{flex:1;height:26px;background:var(--bg);border-radius:6px;overflow:hidden}
+.chart-bar-fill{height:100%;border-radius:6px;display:flex;align-items:center;padding:0 8px;transition:width .7s ease;min-width:4px}
+.chart-bar-val{font-size:12px;font-weight:700;color:#fff;white-space:nowrap}
+
+.list-item{background:var(--card);border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow);border:1px solid rgba(0,0,0,.04);cursor:pointer;transition:opacity .2s}
+.list-item:active{opacity:.85}
+.list-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--azul3),var(--ouro));display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;flex-shrink:0}
+.list-info{flex:1;min-width:0}
+.list-name{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.list-sub{font-size:11px;color:var(--cinza);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.badge{font-size:10px;padding:3px 8px;border-radius:20px;font-weight:700;flex-shrink:0}
+.badge-coord{background:#ede9fe;color:#5b21b6}
+.badge-campo{background:#dcfce7;color:#166534}
+.badge-azul{background:#eff6ff;color:#1e40af}
+.badge-ouro{background:#fef3c7;color:#92400e}
+
+/* ══════════ NOVO: Animação de remoção de linha ══════════ */
+.row-removing{animation:rowSlideOut .45s ease forwards;pointer-events:none}
+@keyframes rowSlideOut{
+  0%{opacity:1;transform:translateX(0);max-height:120px;margin-bottom:8px}
+  60%{opacity:0;transform:translateX(40px)}
+  100%{opacity:0;transform:translateX(60px);max-height:0;margin-bottom:0;padding:0;border-width:0;overflow:hidden}
+}
+
+/* ══════════ NOVO: Modal de confirmação de exclusão ══════════ */
+.modal-del-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;justify-content:center;z-index:1100;opacity:0;visibility:hidden;transition:all .25s ease}
+.modal-del-overlay.active{opacity:1;visibility:visible}
+.modal-del-box{background:var(--card);border-radius:20px 20px 0 0;padding:24px 20px 20px;width:100%;max-height:88vh;overflow-y:auto;transform:translateY(100%);transition:transform .3s cubic-bezier(.16,1,.3,1)}
+.modal-del-overlay.active .modal-del-box{transform:translateY(0)}
+.modal-del-icon{width:52px;height:52px;border-radius:14px;background:#fee2e2;border:1.5px solid #fecaca;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:16px;animation:iconShake .45s ease .25s}
+@keyframes iconShake{0%,100%{transform:rotate(0)}20%{transform:rotate(-8deg)}40%{transform:rotate(8deg)}60%{transform:rotate(-4deg)}80%{transform:rotate(4deg)}}
+.modal-del-title{font-size:17px;font-weight:800;color:var(--texto);margin-bottom:6px}
+.modal-del-text{font-size:13px;color:var(--texto2);line-height:1.6;margin-bottom:16px}
+.modal-del-text .hl{color:var(--texto);font-weight:700;background:#fef3c7;padding:1px 6px;border-radius:4px}
+.modal-del-warn{background:#fee2e2;border:1px solid #fecaca;border-radius:10px;padding:11px 13px;margin-bottom:18px;display:flex;align-items:flex-start;gap:9px;font-size:12px;color:#991b1b;line-height:1.5}
+.modal-del-warn span{flex-shrink:0;font-size:14px}
+.confirm-check{display:flex;align-items:center;gap:10px;margin-bottom:18px;cursor:pointer;user-select:none}
+.confirm-check input{display:none}
+.check-box{width:20px;height:20px;border:2px solid var(--cinza2);border-radius:5px;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+.check-box i{font-size:10px;color:#fff;opacity:0;transform:scale(0);transition:all .2s}
+.confirm-check input:checked+.check-box{background:var(--vermelho);border-color:var(--vermelho)}
+.confirm-check input:checked+.check-box i{opacity:1;transform:scale(1)}
+.check-label{font-size:12px;color:var(--texto2);line-height:1.4}
+.modal-del-actions{display:flex;gap:8px}
+.modal-del-actions .btn{flex:1}
+
+/* ══════════ NOVO: Toast de notificação ══════════ */
+.toast-wrap{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:2000;display:flex;flex-direction:column;gap:8px;width:calc(100% - 24px);max-width:420px;pointer-events:none}
+.toast{background:var(--card);border-radius:12px;padding:13px 16px;display:flex;align-items:center;gap:11px;box-shadow:0 8px 30px rgba(0,0,0,.18);border:1px solid rgba(0,0,0,.06);transform:translateY(-120%);transition:transform .35s cubic-bezier(.16,1,.3,1);pointer-events:auto;position:relative;overflow:hidden}
+.toast.show{transform:translateY(0)}
+.toast-ico{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.toast-ico.ok{background:#dcfce7;color:var(--verde)}
+.toast-ico.err{background:#fee2e2;color:var(--vermelho)}
+.toast-body{flex:1;min-width:0}
+.toast-tit{font-size:13px;font-weight:700;color:var(--texto)}
+.toast-msg{font-size:11px;color:var(--cinza);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.toast-x{background:none;border:none;color:var(--cinza);cursor:pointer;padding:4px;font-size:11px;flex-shrink:0}
+.toast-bar{position:absolute;bottom:0;left:0;height:3px;border-radius:0 0 12px 12px;animation:toastBar 3.5s linear forwards}
+.toast-bar.ok{background:var(--verde)}
+.toast-bar.err{background:var(--vermelho)}
+@keyframes toastBar{from{width:100%}to{width:0%}}
+
+.login-bg{flex:1;display:flex;flex-direction:column;justify-content:center;padding:24px;background:linear-gradient(160deg,var(--azul) 0%,var(--azul2) 60%,#1a3a6b 100%)}
+.login-hero{text-align:center;margin-bottom:32px}
+.login-icon{font-size:64px;margin-bottom:12px}
+.login-title{font-size:26px;font-weight:800;color:#fff;letter-spacing:-.3px}
+.login-sub{font-size:13px;color:#93bbf0;margin-top:6px}
+.login-card{background:rgba(255,255,255,.09);backdrop-filter:blur(12px);border-radius:16px;padding:20px;border:1px solid rgba(255,255,255,.15)}
+.login-label{font-size:10px;color:rgba(255,255,255,.65);font-weight:800;text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px;display:block}
+.login-input{width:100%;padding:12px 14px;background:rgba(255,255,255,.12);border:1.5px solid rgba(255,255,255,.2);border-radius:9px;font-size:14px;color:#fff;font-family:inherit;margin-bottom:12px}
+.login-input::placeholder{color:rgba(255,255,255,.4)}
+.login-input:focus{outline:none;border-color:var(--ouro2)}
+.login-status{text-align:center;margin-top:14px;font-size:12px;color:rgba(255,255,255,.45)}
+
+.morador-card{background:#f8fafc;border-radius:10px;padding:12px;margin-bottom:10px;border:1.5px solid var(--cinza2)}
+.morador-title{font-size:11px;font-weight:800;color:var(--azul3);margin-bottom:10px;text-transform:uppercase;letter-spacing:.6px}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;z-index:1000}
+.modal-box{background:var(--card);border-radius:20px 20px 0 0;padding:20px;width:100%;max-height:88vh;overflow-y:auto}
+.modal-title{font-size:16px;font-weight:800;margin-bottom:16px}
+.modal-actions{display:flex;gap:8px;margin-top:16px}
+
+.spinner{display:inline-block;width:18px;height:18px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty{text-align:center;padding:36px 20px;color:var(--cinza)}
+.empty-icon{font-size:36px;margin-bottom:8px}
+.empty-text{font-size:14px;font-weight:600}
+.search-box{position:relative;margin-bottom:12px}
+.search-box .form-input{padding-left:38px}
+.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:15px;color:var(--cinza)}
+.detalhe-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--cinza2);font-size:13px}
+.detalhe-row:last-child{border-bottom:none}
+.detalhe-key{color:var(--cinza);font-weight:600}
+.detalhe-val{font-weight:700;text-align:right;max-width:60%}
+
+.voto-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.voto-btn{padding:11px 8px;border:2px solid var(--cinza2);border-radius:10px;background:#fff;color:var(--texto2);font-size:13px;font-weight:700;cursor:pointer;transition:all .18s;text-align:center;font-family:inherit}
+.voto-btn:active{transform:scale(.97)}
+.voto-btn.selected{border-color:var(--azul3);background:var(--azul);color:#fff;box-shadow:0 0 0 3px rgba(45,95,168,.15)}
+
+/* ══════════ DEV MODE — painel de desenvolvedor (DESATIVAR/REMOVER EM PRODUÇÃO) ══════════ */
+.dev-fab{position:fixed;bottom:18px;right:18px;z-index:3000;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border:none;font-size:22px;box-shadow:0 6px 20px rgba(124,58,237,.45);cursor:pointer;display:none;align-items:center;justify-content:center}
+.dev-fab:active{transform:scale(.93)}
+.dev-panel{position:fixed;bottom:80px;right:18px;z-index:3000;background:var(--card);border-radius:14px;box-shadow:0 10px 40px rgba(0,0,0,.25);border:1.5px solid #a855f7;padding:14px;width:222px;display:none;flex-direction:column;gap:8px}
+.dev-panel.open{display:flex}
+.dev-panel-title{font-size:11px;font-weight:800;color:#7c3aed;text-transform:uppercase;letter-spacing:.6px;margin-bottom:2px}
+.dev-btn{padding:9px 10px;border-radius:8px;border:1.5px solid #ede9fe;background:#f5f3ff;color:#5b21b6;font-size:12px;font-weight:700;cursor:pointer;text-align:left;font-family:inherit}
+.dev-btn:active{transform:scale(.97)}
+.dev-btn.danger{background:#fee2e2;border-color:#fecaca;color:#991b1b}
+.dev-badge{position:fixed;top:8px;left:8px;z-index:3000;background:#7c3aed;color:#fff;font-size:10px;font-weight:800;padding:3px 8px;border-radius:6px;letter-spacing:.4px;display:none}
+
+/* ══════════ RESPONSIVO ══════════ */
+@media (min-width:640px){
+  #app{max-width:680px}
+  .form-row{grid-template-columns:1fr 1fr 1fr}
+  .stat-grid{grid-template-columns:repeat(4,1fr)}
+  .voto-grid{grid-template-columns:repeat(4,1fr)}
+  .content{padding:18px}
+  .modal-overlay{align-items:center;justify-content:center;padding:20px}
+  .modal-box{border-radius:16px;width:auto;min-width:420px;max-width:560px;max-height:85vh}
+  .modal-del-overlay{align-items:center;justify-content:center;padding:20px}
+  .modal-del-box{border-radius:16px;width:auto;min-width:400px;max-width:480px;max-height:85vh}
+  .login-card{max-width:420px;margin:0 auto;width:100%}
+}
+@media (min-width:1000px){
+  #app{max-width:980px;box-shadow:0 0 40px rgba(15,36,71,.08)}
+  .form-row{grid-template-columns:1fr 1fr 1fr 1fr}
+  .modal-box{max-width:640px}
+  .modal-del-box{max-width:520px}
+  .list-item{padding:14px 18px}
+}
+@media (min-width:860px){
+  #screen-login .login-bg{width:100vw;max-width:100vw;margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);padding:0 60px}
+  #screen-login .login-columns{display:flex;align-items:center;justify-content:center;gap:64px;max-width:1100px;margin:0 auto;width:100%}
+  #screen-login .login-hero{flex:1;margin-bottom:0;text-align:right;max-width:480px}
+  #screen-login .login-card{flex:0 0 400px;max-width:400px;margin:0}
+  #screen-login .login-status{margin-top:28px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- DEV MODE: selo indicando pré-visualização (DESATIVAR/REMOVER EM PRODUÇÃO) -->
+<div class="dev-badge" id="dev-badge">🛠️ PRÉ-VISUALIZAÇÃO DEV</div>
+
+<!-- ══════════════ LOGIN ══════════════ -->
+<div class="screen active" id="screen-login">
+  <div class="login-bg">
+    <div class="login-columns">
+    <div class="login-hero">
+      <div class="login-icon">🗳️</div>
+      <div class="login-title">Sistema de Cadastro</div>
+      <div class="login-sub">Sistema de Cadastro de pessoas</div>
+    </div>
+    <div class="login-card">
+      <div id="login-error" class="alert alert-erro" style="display:none;"></div>
+      <label class="login-label">Usuário</label>
+      <input type="text" id="login-user" class="login-input" placeholder="seu usuário" autocomplete="username">
+      <label class="login-label">Senha</label>
+      <input type="password" id="login-pass" class="login-input" placeholder="sua senha" autocomplete="current-password">
+      <button class="btn btn-gold" id="login-btn" onclick="executarLogin()">🔐 Entrar</button>
+    </div>
+    </div>
+    <div class="login-status">🌐 <span id="status-text">verificando conexão…</span></div>
+  </div>
+</div>
+
+<!-- ══════════════ TROCA DE SENHA OBRIGATÓRIA ══════════════ -->
+<div class="screen" id="screen-troca-senha">
+  <div class="login-bg">
+    <div class="login-columns">
+    <div class="login-hero">
+      <div class="login-icon">🔑</div>
+      <div class="login-title">Nova Senha</div>
+      <div class="login-sub">Sua senha foi redefinida pelo administrador.<br>Crie uma nova senha para continuar.</div>
+    </div>
+    <div class="login-card">
+      <div id="troca-senha-error" class="alert alert-erro" style="display:none;"></div>
+      <label class="login-label">Senha Temporária (recebida do admin)</label>
+      <input type="password" id="ts-atual" class="login-input" placeholder="senha temporária" autocomplete="current-password">
+      <label class="login-label">Nova Senha</label>
+      <input type="password" id="ts-nova" class="login-input" placeholder="mínimo 6 caracteres" autocomplete="new-password">
+      <label class="login-label">Confirmar Nova Senha</label>
+      <input type="password" id="ts-confirma" class="login-input" placeholder="repita a nova senha" autocomplete="new-password">
+      <button class="btn btn-gold" id="ts-btn" onclick="executarTrocaSenha()">✅ Definir Nova Senha</button>
+    </div>
+    </div>
+    <div class="login-status">🔒 Você precisa trocar a senha antes de continuar</div>
+  </div>
+</div>
+
+<!-- ══════════════ ADMIN MASTER ══════════════ -->
+<div class="screen" id="screen-adm">
+  <div class="topbar">
+    <div class="topbar-inner">
+      <span class="dot" id="dot-adm"></span>
+      <div>
+        <div class="topbar-title">🗳️ Painel Master</div>
+        <div class="topbar-sub" id="adm-username"></div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="executarLogout()">Sair</button>
+    </div>
+    <div class="tab-nav">
+      <button class="tab-btn active" onclick="admTab('painel',this)"><span class="tab-icon">📊</span>Painel</button>
+      <button class="tab-btn" onclick="admTab('cadastros',this)"><span class="tab-icon">📋</span>Cadastros</button>
+      <button class="tab-btn" onclick="admTab('coords',this)"><span class="tab-icon">🧑‍💼</span>Coords</button>
+      <button class="tab-btn" onclick="admTab('agentes',this)"><span class="tab-icon">🚶</span>Líderes</button>
+    </div>
+  </div>
+  <div class="tab-content active" id="tab-adm-painel"><div class="content">
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num" id="s-total">—</div><div class="stat-label">Cadastros</div></div>
+      <div class="stat-card"><div class="stat-num" id="s-bairros">—</div><div class="stat-label">Bairros</div></div>
+      <div class="stat-card"><div class="stat-num" id="s-coords">—</div><div class="stat-label">Coordenadores</div></div>
+      <div class="stat-card"><div class="stat-num" id="s-agentes">—</div><div class="stat-label">Líderes</div></div>
+    </div>
+    <button class="btn btn-gold" style="margin-bottom:14px" onclick="exportarExcel()" id="btn-excel">📊 Gerar Relatório Excel</button>
+    <div class="card"><div class="card-title">🗳️ Intenção de Voto</div><div id="chart-voto"></div></div>
+    <div class="card"><div class="card-title">📌 Adesivamento</div><div id="chart-adesivamento"></div></div>
+    <div class="card"><div class="card-title">📍 Por Bairro (top 7)</div><div id="chart-bairro"></div></div>
+    <div class="card"><div class="card-title">🚶 Produção por Líder</div><div id="chart-agente"></div></div>
+  </div></div>
+  <div class="tab-content" id="tab-adm-cadastros"><div class="content">
+    <div class="search-box"><span class="search-icon">🔍</span><input class="form-input" id="busca-adm" placeholder="Buscar nome, bairro…" oninput="filtrar('adm')"></div>
+    <div id="lista-adm"></div>
+  </div></div>
+  <div class="tab-content" id="tab-adm-coords"><div class="content">
+    <button class="btn btn-gold" style="margin-bottom:14px" onclick="abrirModal('coord')">➕ Novo Coordenador</button>
+    <div id="lista-coords"></div>
+  </div></div>
+  <div class="tab-content" id="tab-adm-agentes"><div class="content">
+    <div id="agentes-header" style="margin-bottom:14px"></div>
+    <button class="btn btn-primary" style="margin-bottom:14px" onclick="abrirModal('campo')">➕ Novo Líder</button>
+    <div id="lista-agentes-adm"></div>
+  </div></div>
+</div>
+
+<!-- ══════════════ COORDENADOR ══════════════ -->
+<div class="screen" id="screen-coord">
+  <div class="topbar">
+    <div class="topbar-inner">
+      <span class="dot" id="dot-coord"></span>
+      <div>
+        <div class="topbar-title">🧑‍💼 Coordenador</div>
+        <div class="topbar-sub" id="coord-username"></div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="executarLogout()">Sair</button>
+    </div>
+    <div class="tab-nav">
+      <button class="tab-btn active" onclick="coordTab('cadastros',this)"><span class="tab-icon">📋</span>Cadastros</button>
+      <button class="tab-btn" onclick="coordTab('equipe',this)"><span class="tab-icon">🚶</span>Equipe</button>
+    </div>
+  </div>
+  <div class="tab-content active" id="tab-coord-cadastros"><div class="content">
+    <div class="search-box"><span class="search-icon">🔍</span><input class="form-input" id="busca-coord" placeholder="Buscar nome, bairro…" oninput="filtrar('coord')"></div>
+    <div id="lista-coord"></div>
+  </div></div>
+  <div class="tab-content" id="tab-coord-equipe"><div class="content">
+    <button class="btn btn-primary" style="margin-bottom:14px" onclick="abrirModal('campo')">➕ Novo Líder</button>
+    <div id="lista-equipe"></div>
+  </div></div>
+</div>
+
+<!-- ══════════════ LÍDER DE CAMPO ══════════════ -->
+<div class="screen" id="screen-campo">
+  <div class="topbar">
+    <div class="topbar-inner">
+      <span class="dot" id="dot-campo"></span>
+      <div>
+        <div class="topbar-title">🚶 Líder de Campo</div>
+        <div class="topbar-sub" id="campo-username"></div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="executarLogout()">Sair</button>
+    </div>
+    <div class="tab-nav">
+      <button class="tab-btn active" onclick="campoTab('novo',this)"><span class="tab-icon">➕</span>Novo</button>
+      <button class="tab-btn" onclick="campoTab('meus',this)"><span class="tab-icon">📋</span>Meus</button>
+    </div>
+  </div>
+  <div class="tab-content active" id="tab-campo-novo"><div class="content">
+    <div id="f-error" class="alert alert-erro" style="display:none;"></div>
+    <div id="f-success" class="alert alert-success" style="display:none;"></div>
+    <div class="section-label">🏠 Dados do Anfitrião</div>
+    <div class="form-group">
+      <label class="form-label">Nome do Anfitrião *</label>
+      <input type="text" id="f-anfitriao" class="form-input" placeholder="Nome completo">
+    </div>
+    <div class="form-row">
+      <div><label class="form-label">Tel / WhatsApp</label><input type="tel" id="f-telefone" class="form-input" placeholder="(99) 99999-9999"></div>
+      <div><label class="form-label">Idade</label><input type="number" id="f-idade" class="form-input" placeholder="Anos" min="0" max="120"></div>
+    </div>
+    <div class="form-row">
+      <div><label class="form-label">Endereço</label><input type="text" id="f-endereco" class="form-input" placeholder="Rua, Av…"></div>
+      <div><label class="form-label">Nº da Casa</label><input type="text" id="f-numero" class="form-input" placeholder="Nº"></div>
+    </div>
+    <div class="form-row">
+      <div><label class="form-label">Bairro</label><input type="text" id="f-bairro" class="form-input" placeholder="Bairro"></div>
+      <div><label class="form-label">Sexo</label>
+        <select id="f-sexo" class="form-select">
+          <option value="">Selecione</option>
+          <option value="M">Masculino</option>
+          <option value="F">Feminino</option>
+          <option value="Outro">Outro</option>
+        </select>
+      </div>
+    </div>
+    <div class="section-label">🗳️ Intenção de Voto</div>
+    <div class="form-group">
+      <div class="voto-grid" id="voto-grid">
+        <button type="button" class="voto-btn" onclick="selecionarVoto(this,'Candidato')">Anselmo</button>
+        <button type="button" class="voto-btn" onclick="selecionarVoto(this,'Indeciso')">❓ Indeciso</button>
+        <button type="button" class="voto-btn" onclick="selecionarVoto(this,'Nulo')">🚫 Não vai votar</button>
+        <button type="button" class="voto-btn" onclick="selecionarVoto(this,'Outro')">✏️ Outro</button>
+      </div>
+      <input type="hidden" id="f-voto">
+      <div id="f-voto-outro-wrap" style="display:none;margin-top:10px">
+        <input type="text" id="f-voto-outro" class="form-input" placeholder="Especifique a intenção de voto…" oninput="document.getElementById('f-voto').value=this.value">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">📝 Observação sobre o voto</label>
+      <textarea id="f-obs-voto" class="form-textarea" placeholder="Detalhes adicionais sobre a intenção de voto…" style="min-height:70px;resize:vertical"></textarea>
+    </div>
+    <div class="section-label">📌 Adesivamento</div>
+    <div class="form-group">
+      <div class="voto-grid" id="adesivamento-grid">
+        <button type="button" class="voto-btn" onclick="selecionarAdesivamento(this,'Não quero')">🚫 Não quero</button>
+        <button type="button" class="voto-btn" onclick="selecionarAdesivamento(this,'Já tenho')">✅ Já tenho</button>
+        <button type="button" class="voto-btn" onclick="selecionarAdesivamento(this,'Quero sim')">📌 Quero sim</button>
+      </div>
+      <input type="hidden" id="f-adesivamento">
+    </div>
+    <div class="section-label">👨‍👩‍👧‍👦 Moradores da Residência</div>
+    <div class="form-group">
+      <label class="form-label">Quantos Moradores?</label>
+      <select id="f-qtd" class="form-select" onchange="renderMoradores()">
+        <option value="1">1 morador</option><option value="2">2 moradores</option>
+        <option value="3">3 moradores</option><option value="4">4 moradores</option>
+        <option value="5">5 moradores</option><option value="6">6 moradores</option>
+        <option value="7">7 moradores</option><option value="8">8 moradores</option>
+        <option value="9">9 moradores</option><option value="10">10 ou mais</option>
+      </select>
+    </div>
+    <div id="moradores-container"></div>
+    <div class="section-label">📝 Observações</div>
+    <div class="form-group">
+      <textarea id="f-obs" class="form-textarea" placeholder="Anotações, pendências, observações gerais…"></textarea>
+    </div>
+    <button class="btn btn-gold" id="btn-salvar" onclick="salvarCadastro()">💾 Salvar Cadastro</button>
+    <div style="height:24px"></div>
+  </div></div>
+  <div class="tab-content" id="tab-campo-meus"><div class="content">
+    <div class="search-box"><span class="search-icon">🔍</span><input class="form-input" id="busca-campo" placeholder="Buscar…" oninput="filtrar('campo')"></div>
+    <div id="lista-campo"></div>
+  </div></div>
+</div>
+
+<!-- ══════════════ MODAL USUÁRIO ══════════════ -->
+<div class="modal-overlay" id="modal-usuario" style="display:none;" onclick="if(event.target===this)fecharModal()">
+  <div class="modal-box">
+    <div class="modal-title" id="modal-titulo">Novo Usuário</div>
+    <div id="modal-error" class="alert alert-erro" style="display:none;"></div>
+    <div class="form-group"><label class="form-label">Nome Completo</label><input type="text" id="m-nome" class="form-input" placeholder="Nome completo"></div>
+    <div class="form-group"><label class="form-label">Login (usuário)</label><input type="text" id="m-usuario" class="form-input" placeholder="login único"></div>
+    <div class="form-group"><label class="form-label">Senha</label><input type="password" id="m-senha" class="form-input" placeholder="mínimo 6 caracteres"></div>
+    <input type="hidden" id="m-role">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="fecharModal()">Cancelar</button>
+      <button class="btn btn-gold" onclick="criarUsuario()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ MODAL DETALHE CADASTRO ══════════════ -->
+<div class="modal-overlay" id="modal-det" style="display:none;" onclick="if(event.target===this)fecharDet()">
+  <div class="modal-box">
+    <div class="modal-title">📋 Cadastro</div>
+    <div id="det-body"></div>
+    <div class="modal-actions" style="margin-top:12px">
+      <button class="btn btn-ghost" onclick="fecharDet()">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ NOVO: MODAL DE CONFIRMAÇÃO DE EXCLUSÃO ══════════════ -->
+<div class="modal-del-overlay" id="modal-del" onclick="if(event.target===this)fecharDelModal()">
+  <div class="modal-del-box">
+    <div class="modal-del-icon">🗑️</div>
+    <div class="modal-del-title">Confirmar Exclusão</div>
+    <div class="modal-del-text" id="del-text">
+      Você tem certeza que deseja excluir <span class="hl" id="del-nome">—</span>?
+    </div>
+    <div class="modal-del-warn">
+      <span>⚠️</span>
+      <span>Esta ação é irreversível. Todos os dados associados a este registro serão permanentemente removidos do sistema.</span>
+    </div>
+    <label class="confirm-check">
+      <input type="checkbox" id="del-check" onchange="toggleDelBtn()">
+      <div class="check-box"><i class="fas fa-check"></i></div>
+      <span class="check-label">Entendo e desejo excluir permanentemente</span>
+    </label>
+    <div class="modal-del-actions">
+      <button class="btn btn-ghost" onclick="fecharDelModal()">Cancelar</button>
+      <button class="btn btn-del" id="del-btn" onclick="executarExclusao()" disabled style="opacity:.4;cursor:not-allowed;width:100%;padding:13px;font-size:14px;font-weight:700;border-radius:10px;font-family:inherit;gap:6px;display:flex;align-items:center;justify-content:center">
+        🗑️ Excluir
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ NOVO: MODAL DE RESULTADO DA REDEFINIÇÃO DE SENHA ══════════════ -->
+<div class="modal-overlay" id="modal-senha-temp" style="display:none;" onclick="if(event.target===this)fecharSenhaTempModal()">
+  <div class="modal-box">
+    <div class="modal-title">🔑 Senha Redefinida</div>
+    <div class="alert alert-info">Repasse esta senha temporária para <b id="st-nome">—</b>. Ela será exigida a criar uma nova senha no próximo login.</div>
+    <div class="form-group">
+      <label class="form-label">Senha Temporária</label>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="st-senha" class="form-input" readonly style="font-family:monospace;font-size:16px;font-weight:800;letter-spacing:1px">
+        <button class="btn btn-ghost btn-sm" onclick="copiarSenhaTemp()">📋 Copiar</button>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-gold" onclick="fecharSenhaTempModal()" style="width:100%">Entendi</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ NOVO: Container de toasts ══════════════ -->
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<!-- ══════════ DEV MODE — botão flutuante e painel (DESATIVAR/REMOVER EM PRODUÇÃO) ══════════ -->
+<!-- Para desativar: veja a constante DEV_MODE no <script> logo abaixo. -->
+<button class="dev-fab" id="dev-fab" onclick="devTogglePanel()" title="Modo Desenvolvedor">🛠️</button>
+<div class="dev-panel" id="dev-panel">
+  <div class="dev-panel-title">🛠️ Modo Desenvolvedor</div>
+  <button class="dev-btn" onclick="devVerComo('adm')">📊 Ver como Admin Master</button>
+  <button class="dev-btn" onclick="devVerComo('coord')">🧑‍💼 Ver como Coordenador</button>
+  <button class="dev-btn" onclick="devVerComo('campo')">🚶 Ver como Líder de Campo</button>
+  <button class="dev-btn danger" onclick="devSair()">↩️ Voltar ao Login (recarregar)</button>
+</div>
+
+<!-- ══════════════ NOVO: Font Awesome para ícone do checkbox ══════════════ -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<script>
+// ════════════════════════════════ CONFIG
+if(!window.CONFIG){
+  (function(){
+    const h=window.location.hostname;
+    let api;
+    if(h==='localhost'||h==='127.0.0.1'||h==='0.0.0.0')api='http://localhost:3000';
+    else if(h==='10.0.2.2')api='http://10.0.2.2:3000';
+    else api=window.location.origin;
+    window.CONFIG={apiUrl:api};
+  })();
+}
+window.CFG={api:window.CONFIG.apiUrl};
+
+// ════════════════════════════════ ESTADO
+let TK=sessionStorage.getItem('token')||null;
+let ME=null;
+let online=false;
+let CADS={adm:[],coord:[],campo:[]};
+let USERS=[];
+
+// ════════════════════════════════════════════════════════════════════════
+// ██ DEV MODE — PAINEL DE DESENVOLVEDOR ██
+// ────────────────────────────────────────────────────────────────────────
+// COMO DESATIVAR: troque a linha abaixo para "const DEV_MODE = false;"
+// Isso esconde o botão 🛠️ e desliga toda a lógica de pré-visualização.
+// COMO REMOVER DE VEZ: apague este bloco inteiro (até a linha marcada
+// "FIM DO BLOCO DEV MODE"), e também os trechos HTML/CSS marcados com
+// o comentário "DEV MODE" (botão flutuante + painel + selo + estilos).
+const DEV_MODE = false;
+// ────────────────────────────────────────────────────────────────────────
+
+function devDadosFake(){
+  const agora=new Date().toISOString();
+  return {
+    cads:[
+      {id:9001,anfitriao:'Maria Souza',telefone:'(95) 99999-1111',endereco:'Rua das Flores',numero_casa:'120',bairro:'Centro',sexo:'F',idade:'42',intencao_voto:'Candidato',adesivamento:'Já tenho',qtd_moradores:2,moradores:JSON.stringify([{nome:'João Souza',sexo:'M',idade:'44',tel:'',parentesco:'Cônjuge'}]),observacao:'Simpatizante forte, pediu material extra.',agente_nome:'Líder Teste',cadastrado_por:'lider1',coord_nome:'Coord Teste',criado_em:agora},
+      {id:9002,anfitriao:'Carlos Lima',telefone:'(95) 99999-2222',endereco:'Av. Brasil',numero_casa:'55',bairro:'Aeroporto',sexo:'M',idade:'35',intencao_voto:'Indeciso',adesivamento:'Quero sim',qtd_moradores:1,moradores:JSON.stringify([]),observacao:'',agente_nome:'Líder Teste',cadastrado_por:'lider1',coord_nome:'Coord Teste',criado_em:agora},
+      {id:9003,anfitriao:'Ana Paula',telefone:'(95) 99999-3333',endereco:'Rua Amazonas',numero_casa:'8',bairro:'Centro',sexo:'F',idade:'29',intencao_voto:'Outro',adesivamento:'Não quero',qtd_moradores:3,moradores:JSON.stringify([]),observacao:'',agente_nome:'Líder Teste 2',cadastrado_por:'lider2',coord_nome:'Coord Teste',criado_em:agora},
+      {id:9004,anfitriao:'Pedro Alves',telefone:'(95) 99999-4444',endereco:'Rua Jaguaribe',numero_casa:'300',bairro:'São Vicente',sexo:'M',idade:'51',intencao_voto:'Candidato',adesivamento:'Já tenho',qtd_moradores:4,moradores:JSON.stringify([]),observacao:'',agente_nome:'Líder Teste 2',cadastrado_por:'lider2',coord_nome:'Coord Teste',criado_em:agora}
+    ],
+    users:[
+      {id:8001,nome:'Coord Teste',usuario:'coord1',role:'coord',ativo:true,criado_em:agora},
+      {id:8002,nome:'Líder Teste',usuario:'lider1',role:'campo',ativo:true,coordenador_nome:'Coord Teste',criado_em:agora},
+      {id:8003,nome:'Líder Teste 2',usuario:'lider2',role:'campo',ativo:false,coordenador_nome:'Coord Teste',criado_em:agora}
+    ]
+  };
+}
+
+// Guarda a função real de chamada à API para poder restaurá-la depois
+let _reqReal=null;
+
+function devStubReq(){
+  if(!_reqReal)_reqReal=req;
+  const fake=devDadosFake();
+  req=async function(method,path){
+    if(path==='/cadastros')return fake.cads;
+    if(path==='/usuarios')return fake.users;
+    if(path==='/relatorio'){
+      const porBairro=Object.entries(fake.cads.reduce((m,c)=>{m[c.bairro]=(m[c.bairro]||0)+1;return m;},{})).map(([bairro,qtd])=>({bairro,qtd}));
+      const porVoto=Object.entries(fake.cads.reduce((m,c)=>{const v=c.intencao_voto||'Não informado';m[v]=(m[v]||0)+1;return m;},{})).map(([candidato,qtd])=>({candidato,qtd}));
+      const porAgente=Object.entries(fake.cads.reduce((m,c)=>{m[c.cadastrado_por]=(m[c.cadastrado_por]||0)+1;return m;},{})).map(([cadastrado_por,qtd])=>({cadastrado_por,qtd}));
+      return{total:fake.cads.length,porBairro,porVoto,porAgente};
+    }
+    if(path==='/me')return ME;
+    return{};
+  };
+}
+
+function devVerComo(role){
+  devStubReq();
+  const nomes={adm:'Administrador (Dev)',coord:'Coord Teste (Dev)',campo:'Líder Teste (Dev)'};
+  ME={id:0,nome:nomes[role],role};
+  document.getElementById('dev-badge').style.display='block';
+  document.getElementById('dev-panel').classList.remove('open');
+  rota();
+}
+
+function devSair(){
+  location.reload();
+}
+
+function devTogglePanel(){
+  document.getElementById('dev-panel').classList.toggle('open');
+}
+// ████ FIM DO BLOCO DEV MODE ████
+// ════════════════════════════════════════════════════════════════════════
+
+// ════════════════════════════════ NOVO: Estado da exclusão
+let DEL_TARGET={type:null,id:null,nome:null};
+
+// ════════════════════════════════ API
+async function req(method,path,body=null){
+  const r=await fetch(window.CFG.api+path,{
+    method,
+    headers:{...(TK?{'Authorization':'Bearer '+TK}:{}),...(body?{'Content-Type':'application/json'}:{})},
+    ...(body?{body:JSON.stringify(body)}:{})
+  });
+  if(!r.ok){
+    const e=await r.json().catch(()=>({erro:'Erro '+r.status}));
+    if(e.trocarSenhaObrigatoria){abrirTrocaSenhaObrigatoria();}
+    throw new Error(e.erro||'Erro '+r.status);
+  }
+  return r.json();
+}
+
+// ════════════════════════════════ CONEXÃO
+async function ping(){
+  try{const r=await fetch(window.CFG.api+'/',{signal:AbortSignal.timeout(4000)});online=r.ok||r.status===401;}
+  catch{online=false;}
+  const txt=document.getElementById('status-text');
+  if(txt)txt.textContent=online?'🟢 Online':'🟡 Offline';
+  document.querySelectorAll('[id^="dot-"]').forEach(d=>{d.className='dot '+(online?'dot-online':'dot-offline');});
+  setTimeout(ping,12000);
+}
+
+// ════════════════════════════════ LOGIN
+async function executarLogin(){
+  const usuario=document.getElementById('login-user').value.trim();
+  const senha=document.getElementById('login-pass').value;
+  const err=document.getElementById('login-error');
+  const btn=document.getElementById('login-btn');
+
+  if(!usuario||!senha){
+    err.textContent='❌ Preencha usuário e senha';
+    err.style.display='block';
+    return;
+  }
+
+  btn.disabled=true;
+  btn.innerHTML='<span class="spinner"></span> Entrando…';
+  err.style.display='none';
+
+  try{
+    const d=await req('POST','/login',{usuario,senha});
+
+    TK=d.token;
+    ME=d.usuario;
+
+    sessionStorage.setItem('token',TK);
+
+    document.getElementById('login-user').value='';
+    document.getElementById('login-pass').value='';
+
+    if(ME.trocarSenha){
+      abrirTrocaSenhaObrigatoria();
+    }else{
+      rota();
+    }
+  }catch(e){
+    err.textContent='❌ '+e.message;
+    err.style.display='block';
+  }finally{
+    btn.disabled=false;
+    btn.innerHTML='🔐 Entrar';
+  }
+}
+
+function executarLogout(){
+  if(!confirm('Sair do sistema?'))return;
+  TK=null;ME=null;sessionStorage.removeItem('token');
+  document.getElementById('dev-badge').style.display='none';
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-login').classList.add('active');
+}
+
+// ════════════════════════════════ NOVO: TROCA DE SENHA OBRIGATÓRIA
+function abrirTrocaSenhaObrigatoria(){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-troca-senha').classList.add('active');
+  document.getElementById('ts-atual').value='';
+  document.getElementById('ts-nova').value='';
+  document.getElementById('ts-confirma').value='';
+  document.getElementById('troca-senha-error').style.display='none';
+}
+
+async function executarTrocaSenha(){
+  const senhaAtual=document.getElementById('ts-atual').value;
+  const novaSenha=document.getElementById('ts-nova').value;
+  const confirma=document.getElementById('ts-confirma').value;
+  const err=document.getElementById('troca-senha-error');
+  const btn=document.getElementById('ts-btn');
+
+  err.style.display='none';
+
+  if(!senhaAtual||!novaSenha||!confirma){
+    err.textContent='❌ Preencha todos os campos';err.style.display='block';return;
+  }
+  if(novaSenha.length<6){
+    err.textContent='❌ A nova senha deve ter no mínimo 6 caracteres';err.style.display='block';return;
+  }
+  if(novaSenha!==confirma){
+    err.textContent='❌ As senhas não coincidem';err.style.display='block';return;
+  }
+
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Salvando…';
+  try{
+    const d=await req('POST','/trocar-senha',{senhaAtual,novaSenha});
+    TK=d.token;ME=d.usuario;
+    sessionStorage.setItem('token',TK);
+    showToast('ok','Senha atualizada','Sua nova senha já está ativa.');
+    rota();
+  }catch(e){
+    err.textContent='❌ '+e.message;err.style.display='block';
+  }finally{
+    btn.disabled=false;btn.innerHTML='✅ Definir Nova Senha';
+  }
+}
+
+// ════════════════════════════════ ROTEAMENTO
+function rota(){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  if(ME.role==='adm'){
+    document.getElementById('screen-adm').classList.add('active');
+    document.getElementById('adm-username').textContent=ME.nome+' · Admin Master';
+    carregarPainel();
+  }else if(ME.role==='coord'){
+    document.getElementById('screen-coord').classList.add('active');
+    document.getElementById('coord-username').textContent=ME.nome+' · Coordenador';
+    carregarCads('coord');
+  }else{
+    document.getElementById('screen-campo').classList.add('active');
+    document.getElementById('campo-username').textContent=ME.nome+' · Líder';
+    renderMoradores();
+    carregarCads('campo');
+  }
+}
+
+// ════════════════════════════════ ABAS
+function admTab(tab,btn){
+  document.querySelectorAll('#screen-adm .tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#screen-adm .tab-content').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');document.getElementById('tab-adm-'+tab).classList.add('active');
+  if(tab==='painel')carregarPainel();
+  if(tab==='cadastros')carregarCads('adm');
+  if(tab==='coords')carregarUsers('coord');
+  if(tab==='agentes')carregarUsers('campo');
+}
+function coordTab(tab,btn){
+  document.querySelectorAll('#screen-coord .tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#screen-coord .tab-content').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');document.getElementById('tab-coord-'+tab).classList.add('active');
+  if(tab==='cadastros')carregarCads('coord');
+  if(tab==='equipe')carregarUsers('campo');
+}
+function campoTab(tab,btn){
+  document.querySelectorAll('#screen-campo .tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#screen-campo .tab-content').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');document.getElementById('tab-campo-'+tab).classList.add('active');
+  if(tab==='meus')carregarCads('campo');
+}
+
+// ════════════════════════════════ PAINEL / GRÁFICOS
+async function carregarPainel(){
+  try{
+    const r=await req('GET','/relatorio');
+    document.getElementById('s-total').textContent=r.total;
+    document.getElementById('s-bairros').textContent=r.porBairro?.length||0;
+    try{
+      const us=await req('GET','/usuarios');USERS=us;
+      document.getElementById('s-coords').textContent=us.filter(u=>u.role==='coord').length;
+      document.getElementById('s-agentes').textContent=us.filter(u=>u.role==='campo').length;
+    }catch{}
+    chart('chart-voto',r.porVoto,'candidato','qtd',['#2d5fa8','#c9a84c','#16a34a','#dc2626','#7c3aed']);
+    let adesData=r.porAdesivamento;
+    if(!adesData){
+      let cadsAll=CADS.adm;
+      if(!cadsAll||!cadsAll.length){try{cadsAll=await req('GET','/cadastros');CADS.adm=cadsAll;}catch{cadsAll=[];}}
+      const map={};cadsAll.forEach(c=>{const v=c.adesivamento||'Não informado';map[v]=(map[v]||0)+1;});
+      adesData=Object.entries(map).map(([k,v])=>({adesivamento:k,qtd:v}));
+    }
+    chart('chart-adesivamento',adesData,'adesivamento','qtd',['#c9a84c','#16a34a','#dc2626']);
+    chart('chart-bairro',(r.porBairro||[]).slice(0,7),'bairro','qtd',['#0f2447','#1e3d6e','#2d5fa8','#4b7fc4','#6b9fd4','#8bbfe4','#aad0f0']);
+    const el=document.getElementById('chart-agente');
+    if(el)el.innerHTML=(r.porAgente||[]).map(a=>`<div class="chart-bar-row"><span class="chart-label">${a.nome||a.cadastrado_por}</span><span class="badge badge-azul">${a.qtd}</span></div>`).join('')||vazio();
+  }catch(e){console.error(e);}
+}
+
+function chart(id,data,kl,kv,cores){
+  const el=document.getElementById(id);if(!el)return;
+  if(!data||!data.length){el.innerHTML=vazio();return;}
+  const mx=Math.max(...data.map(d=>d[kv]));
+  el.innerHTML=data.map((d,i)=>{
+    const p=mx?Math.max(Math.round(d[kv]/mx*100),2):2;
+    return`<div class="chart-bar-row"><span class="chart-label" title="${d[kl]}">${d[kl]}</span><div class="chart-bar-bg"><div class="chart-bar-fill" style="width:${p}%;background:${cores[i%cores.length]}"><span class="chart-bar-val">${d[kv]}</span></div></div></div>`;
+  }).join('');
+}
+
+// ════════════════════════════════ CADASTROS
+async function carregarCads(who){
+  try{
+    const data=await req('GET','/cadastros');
+    CADS[who]=data;renderCads(who,data);
+  }catch(e){console.error(e);}
+}
+
+function renderCads(who,data){
+  const id=who==='adm'?'lista-adm':who==='coord'?'lista-coord':'lista-campo';
+  const el=document.getElementById(id);if(!el)return;
+  if(!data||!data.length){el.innerHTML=vazio('Nenhum cadastro');return;}
+  const isAdmin=ME&&ME.role==='adm';
+  el.innerHTML=data.map(c=>{
+    const ini=(c.anfitriao||'?')[0].toUpperCase();
+    const dt=c.criado_em?new Date(c.criado_em).toLocaleDateString('pt-BR'):'';
+    const voto=c.intencao_voto?`<span class="badge badge-azul">${c.intencao_voto}</span>`:'';
+    const ades=c.adesivamento?`<span class="badge badge-ouro">${c.adesivamento}</span>`:'';
+    const lider=c.agente_nome?` · ${c.agente_nome}`:'';
+    // NOVO: botão excluir só para admin
+    const delBtn=isAdmin?`<button class="btn-del" onclick="event.stopPropagation();abrirDelModal('cadastro',${c.id},'${(c.anfitriao||'').replace(/'/g,"\\'")}')" title="Excluir cadastro">🗑️</button>`:'';
+    return`<div class="list-item" id="row-cad-${c.id}" onclick="verCad(${c.id},'${who}')">
+      <div class="list-avatar">${ini}</div>
+      <div class="list-info">
+        <div class="list-name">${c.anfitriao}</div>
+        <div class="list-sub">${c.bairro||'—'} · ${dt}${lider}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">${voto}${ades}</div>
+      ${delBtn}
+    </div>`;
+  }).join('');
+}
+
+function filtrar(who){
+  const q=(document.getElementById(`busca-${who}`)?.value||'').toLowerCase();
+  const f=(CADS[who]||[]).filter(c=>(c.anfitriao||'').toLowerCase().includes(q)||(c.bairro||'').toLowerCase().includes(q));
+  renderCads(who,f);
+}
+
+function verCad(id,who){
+  const all=[...CADS.adm,...CADS.coord,...CADS.campo];
+  const c=all.find(x=>x.id===id);if(!c)return;
+  let mr='';
+  if(c.moradores){
+    try{
+      const m=typeof c.moradores==='string'?JSON.parse(c.moradores):c.moradores;
+      mr=m.map((x,i)=>`<div style="background:var(--bg);border-radius:8px;padding:10px;margin:4px 0"><b>Morador ${i+1}:</b> ${x.nome||'—'} · ${x.sexo||'—'} · ${x.idade||'—'} anos · ${x.tel||'—'} · ${x.parentesco||'—'}</div>`).join('');
+    }catch{}
+  }
+  document.getElementById('det-body').innerHTML=`
+    <div>${campo('Anfitrião',c.anfitriao)}${campo('Tel/WhatsApp',c.telefone)}${campo('Endereço',(c.endereco||'')+(c.numero_casa?' Nº'+c.numero_casa:''))}${campo('Bairro',c.bairro)}${campo('Sexo',c.sexo)}${campo('Idade',c.idade?c.idade+' anos':null)}${campo('Intenção de Voto',c.intencao_voto,'ouro')}${campo('Adesivamento',c.adesivamento,'ouro')}${campo('Moradores',c.qtd_moradores)}</div>
+    ${mr?`<div style="margin-top:10px"><b style="font-size:12px;color:var(--cinza)">MORADORES:</b>${mr}</div>`:''}
+    ${c.observacao?`<div style="margin-top:10px;padding:10px;background:var(--bg);border-radius:8px;font-size:13px;color:var(--cinza)">${c.observacao}</div>`:''}
+    <div style="font-size:11px;color:var(--cinza);margin-top:10px">Por: ${c.agente_nome||c.cadastrado_por} · ${c.criado_em?new Date(c.criado_em).toLocaleString('pt-BR'):''}</div>`;
+  document.getElementById('modal-det').style.display='flex';
+}
+function campo(k,v,tipo){
+  if(!v&&v!==0)return'';
+  const cor=tipo==='ouro'?'color:var(--ouro);font-size:15px':'';
+  return`<div class="detalhe-row"><span class="detalhe-key">${k}</span><span class="detalhe-val" style="${cor}">${v}</span></div>`;
+}
+function fecharDet(){document.getElementById('modal-det').style.display='none';}
+
+// ════════════════════════════════ USUÁRIOS
+async function carregarUsers(role){
+  try{
+    const data=await req('GET','/usuarios');USERS=data;
+    const filtrado=data.filter(u=>u.role===role);
+    const id=role==='coord'?'lista-coords':ME.role==='coord'?'lista-equipe':'lista-agentes-adm';
+    const el=document.getElementById(id);if(!el)return;
+    const isAdmin=ME&&ME.role==='adm';
+
+    // Painel de líderes do admin: mostrar header com contador + cadastros por líder
+    if(role==='campo'&&isAdmin){
+      const hdr=document.getElementById('agentes-header');
+      if(hdr){
+        let cadsData=CADS.adm;
+        if(!cadsData||!cadsData.length){try{cadsData=await req('GET','/cadastros');CADS.adm=cadsData;}catch{cadsData=[];}}
+        const total=filtrado.length;
+        const ativos=filtrado.filter(u=>u.ativo).length;
+        hdr.innerHTML=`
+          <div style="display:flex;gap:10px;margin-bottom:14px">
+            <div class="stat-card" style="flex:1;padding:12px">
+              <div class="stat-num" style="font-size:26px;color:var(--verde)">${total}</div>
+              <div class="stat-label">Total de Líderes</div>
+            </div>
+            <div class="stat-card" style="flex:1;padding:12px">
+              <div class="stat-num" style="font-size:26px;color:var(--azul3)">${ativos}</div>
+              <div class="stat-label">Líderes Ativos</div>
+            </div>
+            <div class="stat-card" style="flex:1;padding:12px">
+              <div class="stat-num" style="font-size:26px;color:var(--ouro)">${total-ativos}</div>
+              <div class="stat-label">Inativos</div>
+            </div>
+          </div>`;
+        const contagem={};cadsData.forEach(c=>{contagem[c.cadastrado_por]=(contagem[c.cadastrado_por]||0)+1;});
+        if(!filtrado.length){el.innerHTML=vazio('Nenhum líder');return;}
+        el.innerHTML=filtrado.map(u=>{
+          const qtd=contagem[u.usuario]||0;
+          const coord=u.coordenador_nome?`<div class="list-sub" style="margin-top:2px">👔 Coord: ${u.coordenador_nome}</div>`:'';
+          // NOVO: botões excluir e resetar senha só para admin
+          const keyBtn=`<button class="btn-key" onclick="event.stopPropagation();resetarSenha(${u.id},'${(u.nome||'').replace(/'/g,"\\'")}')" title="Resetar senha">🔑</button>`;
+          const delBtn=`<button class="btn-del" onclick="event.stopPropagation();abrirDelModal('lider',${u.id},'${(u.nome||'').replace(/'/g,"\\'")}')" title="Excluir líder">🗑️</button>`;
+          return`<div class="list-item" id="row-user-${u.id}">
+            <div class="list-avatar" style="background:${u.ativo?'linear-gradient(135deg,var(--verde),#22c55e)':'linear-gradient(135deg,var(--cinza),#94a3b8)'}">${u.nome[0].toUpperCase()}</div>
+            <div class="list-info">
+              <div class="list-name">${u.nome}</div>
+              <div class="list-sub">@${u.usuario} · ${u.ativo?'✅ Ativo':'❌ Inativo'}</div>
+              ${coord}
+            </div>
+            <div style="text-align:center;flex-shrink:0">
+              <div style="font-size:20px;font-weight:800;color:var(--azul)">${qtd}</div>
+              <div style="font-size:9px;color:var(--cinza);font-weight:700;text-transform:uppercase">Cadastros</div>
+            </div>
+            ${keyBtn}
+            ${delBtn}
+          </div>`;
+        }).join('');
+        return;
+      }
+    }
+
+    // Coordenadores (vista do admin)
+    if(role==='coord'&&isAdmin){
+      if(!filtrado.length){el.innerHTML=vazio('Nenhum usuário');return;}
+      el.innerHTML=filtrado.map(u=>{
+        const keyBtn=`<button class="btn-key" onclick="event.stopPropagation();resetarSenha(${u.id},'${(u.nome||'').replace(/'/g,"\\'")}')" title="Resetar senha">🔑</button>`;
+        const delBtn=`<button class="btn-del" onclick="event.stopPropagation();abrirDelModal('coord',${u.id},'${(u.nome||'').replace(/'/g,"\\'")}')" title="Excluir coordenador">🗑️</button>`;
+        return`<div class="list-item" id="row-user-${u.id}">
+          <div class="list-avatar">${u.nome[0].toUpperCase()}</div>
+          <div class="list-info">
+            <div class="list-name">${u.nome}</div>
+            <div class="list-sub">@${u.usuario} · ${u.ativo?'✅ Ativo':'❌ Inativo'}</div>
+          </div>
+          <span class="badge badge-coord">Coord</span>
+          ${keyBtn}
+          ${delBtn}
+        </div>`;
+      }).join('');
+      return;
+    }
+
+    // Vista do coordenador (sem botões de admin)
+    if(!filtrado.length){el.innerHTML=vazio('Nenhum usuário');return;}
+    const badge=role==='coord'?'badge-coord':'badge-campo';
+    const rotulo=role==='coord'?'Coord':'Líder';
+    el.innerHTML=filtrado.map(u=>`
+      <div class="list-item">
+        <div class="list-avatar">${u.nome[0].toUpperCase()}</div>
+        <div class="list-info">
+          <div class="list-name">${u.nome}</div>
+          <div class="list-sub">@${u.usuario} · ${u.ativo?'✅ Ativo':'❌ Inativo'}</div>
+        </div>
+        <span class="badge ${badge}">${rotulo}</span>
+      </div>`).join('');
+  }catch(e){console.error(e);}
+}
+
+// ════════════════════════════════ NOVO: Resetar senha (admin)
+async function resetarSenha(id,nome){
+  if(!confirm(`Redefinir a senha de ${nome}?\n\nUma nova senha temporária será gerada e ele(a) precisará trocá-la no próximo login.`))return;
+  try{
+    const d=await req('PUT','/usuarios/'+id+'/resetar-senha');
+    document.getElementById('st-nome').textContent=nome;
+    document.getElementById('st-senha').value=d.senhaTemporaria;
+    document.getElementById('modal-senha-temp').style.display='flex';
+    showToast('ok','Senha redefinida',nome+' precisará trocar a senha no próximo login.');
+  }catch(e){
+    showToast('err','Erro ao redefinir senha',e.message);
+  }
+}
+function fecharSenhaTempModal(){document.getElementById('modal-senha-temp').style.display='none';}
+function copiarSenhaTemp(){
+  const inp=document.getElementById('st-senha');
+  inp.select();
+  navigator.clipboard?.writeText(inp.value).then(()=>showToast('ok','Copiado','Senha copiada para a área de transferência.')).catch(()=>{});
+}
+
+// ════════════════════════════════ NOVO: Modal de exclusão — funções
+function abrirDelModal(type,id,nome){
+  DEL_TARGET={type,id,nome};
+  document.getElementById('del-nome').textContent=nome;
+  document.getElementById('del-check').checked=false;
+  toggleDelBtn();
+  document.getElementById('modal-del').classList.add('active');
+  document.body.style.overflow='hidden';
+}
+
+function fecharDelModal(){
+  document.getElementById('modal-del').classList.remove('active');
+  document.body.style.overflow='';
+  DEL_TARGET={type:null,id:null,nome:null};
+}
+
+function toggleDelBtn(){
+  const ok=document.getElementById('del-check').checked;
+  const btn=document.getElementById('del-btn');
+  btn.disabled=!ok;
+  btn.style.opacity=ok?'1':'.4';
+  btn.style.cursor=ok?'pointer':'not-allowed';
+}
+
+async function executarExclusao(){
+  const{type,id,nome}=DEL_TARGET;
+  if(!type||!id)return;
+
+  const btn=document.getElementById('del-btn');
+  btn.disabled=true;
+  btn.innerHTML='<span class="spinner" style="border-top-color:var(--vermelho)"></span> Excluindo…';
+
+  try{
+    // Determina o endpoint correto
+    let endpoint;
+    if(type==='cadastro'){
+      endpoint='/cadastros/'+id;
+    }else{
+      // coord ou lider — ambos são usuários
+      endpoint='/usuarios/'+id;
+    }
+
+    await req('DELETE',endpoint);
+
+    // Animar remoção da linha
+    let rowId;
+    if(type==='cadastro'){
+      rowId='row-cad-'+id;
+    }else{
+      rowId='row-user-'+id;
+    }
+    const row=document.getElementById(rowId);
+    if(row)row.classList.add('row-removing');
+
+    fecharDelModal();
+
+    // Aguardar animação e re-renderizar
+    setTimeout(()=>{
+      if(type==='cadastro'){
+        // Atualizar todas as listas de cadastro que o admin pode ver
+        CADS.adm=(CADS.adm||[]).filter(c=>c.id!==id);
+        renderCads('adm',CADS.adm);
+        // Atualizar estatísticas do painel
+        carregarPainel();
+      }else if(type==='coord'){
+        USERS=(USERS||[]).filter(u=>u.id!==id);
+        carregarUsers('coord');
+        carregarPainel();
+      }else if(type==='lider'){
+        USERS=(USERS||[]).filter(u=>u.id!==id);
+        carregarUsers('campo');
+        carregarPainel();
+      }
+    },450);
+
+    // Toast de sucesso
+    const label=type==='cadastro'?'Cadastro':type==='coord'?'Coordenador':'Líder';
+    showToast('ok',label+' excluído',nome+' foi removido permanentemente.');
+
+  }catch(e){
+    btn.disabled=false;
+    btn.innerHTML='🗑️ Excluir';
+    toggleDelBtn();
+    showToast('err','Erro ao excluir',e.message);
+  }
+}
+
+// Fechar modal com ESC
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape')fecharDelModal();
+});
+
+// ════════════════════════════════ NOVO: Toast
+function showToast(tipo,titulo,mensagem){
+  const wrap=document.getElementById('toast-wrap');
+  const t=document.createElement('div');
+  t.className='toast';
+  t.innerHTML=`
+    <div class="toast-ico ${tipo}">${tipo==='ok'?'✓':'✕'}</div>
+    <div class="toast-body">
+      <div class="toast-tit">${titulo}</div>
+      <div class="toast-msg">${mensagem}</div>
+    </div>
+    <button class="toast-x" onclick="this.parentElement.remove()">✕</button>
+    <div class="toast-bar ${tipo}"></div>`;
+  wrap.appendChild(t);
+  requestAnimationFrame(()=>t.classList.add('show'));
+  setTimeout(()=>{
+    t.classList.remove('show');
+    setTimeout(()=>t.remove(),350);
+  },3500);
+}
+
+// ════════════════════════════════ EXPORTAR EXCEL
+async function exportarExcel(){
+  const btn=document.getElementById('btn-excel');
+  btn.disabled=true;btn.innerHTML='<span class="spinner" style="border-top-color:var(--azul)"></span> Gerando…';
+  try{
+    let cads=CADS.adm;
+    if(!cads||!cads.length){cads=await req('GET','/cadastros');CADS.adm=cads;}
+    let users=USERS;
+    if(!users||!users.length){users=await req('GET','/usuarios');USERS=users;}
+
+    await carregarSheetJSPro();
+    const wb=XLSX.utils.book_new();
+
+    const S={
+      hdrTitulo:{font:{name:'Arial',sz:13,bold:true,color:{rgb:'FFFFFF'}},fill:{fgColor:{rgb:'1F3864'}},alignment:{horizontal:'center',vertical:'center'},border:bAll('1F3864')},
+      hdrSub:{font:{name:'Arial',sz:10,bold:true,color:{rgb:'FFFFFF'}},fill:{fgColor:{rgb:'2E74B5'}},alignment:{horizontal:'center',vertical:'center'}},
+      infoLabel:{font:{name:'Arial',sz:9,bold:true,color:{rgb:'1F3864'}},fill:{fgColor:{rgb:'D6E4F0'}},alignment:{horizontal:'right',vertical:'center'},border:bAll('B8CCE4')},
+      infoVal:{font:{name:'Arial',sz:9,color:{rgb:'0D0D0D'}},fill:{fgColor:{rgb:'EBF3FB'}},alignment:{horizontal:'left',vertical:'center'},border:bAll('B8CCE4')},
+      col:{font:{name:'Arial',sz:10,bold:true,color:{rgb:'FFFFFF'}},fill:{fgColor:{rgb:'1F3864'}},alignment:{horizontal:'center',vertical:'center',wrapText:true},border:bAll('4472C4')},
+      par:{font:{name:'Arial',sz:9,color:{rgb:'0D0D0D'}},fill:{fgColor:{rgb:'DCE6F1'}},alignment:{vertical:'center'},border:bAll('9DC3E6')},
+      impar:{font:{name:'Arial',sz:9,color:{rgb:'0D0D0D'}},fill:{fgColor:{rgb:'FFFFFF'}},alignment:{vertical:'center'},border:bAll('9DC3E6')},
+      status:{font:{name:'Arial',sz:9,bold:true,color:{rgb:'375623'}},fill:{fgColor:{rgb:'E2EFDA'}},alignment:{horizontal:'center',vertical:'center'},border:bAll('9DC3E6')},
+      num:{font:{name:'Arial',sz:9,color:{rgb:'0D0D0D'}},fill:{fgColor:{rgb:'DCE6F1'}},alignment:{horizontal:'center',vertical:'center'},border:bAll('9DC3E6')},
+      numI:{font:{name:'Arial',sz:9,color:{rgb:'0D0D0D'}},fill:{fgColor:{rgb:'FFFFFF'}},alignment:{horizontal:'center',vertical:'center'},border:bAll('9DC3E6')},
+    };
+    function bAll(c){const s={style:'thin',color:{rgb:c}};return{top:s,bottom:s,left:s,right:s};}
+
+    (function(){
+      const ws={};const now=new Date().toLocaleDateString('pt-BR');const total=cads.length;
+      ws['A1']={v:`RELATÓRIO ELEITORAL — TODOS OS CADASTROS — ${now}`,s:S.hdrTitulo,t:'s'};
+      ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:15}}];
+      ws['A2']={v:'Sistema de Cadastro Eleitoral · Exportado em '+now,s:S.hdrSub,t:'s'};
+      ws['!merges'].push({s:{r:1,c:0},e:{r:1,c:15}});
+      ws['A3']={v:'Total de cadastros:',s:S.infoLabel,t:'s'};ws['B3']={v:total,s:S.infoVal,t:'n'};
+      ws['C3']={v:'Data de exportação:',s:S.infoLabel,t:'s'};ws['D3']={v:now,s:S.infoVal,t:'s'};
+      ws['A4']={v:'',s:{},t:'s'};
+      const cols5=['#','Anfitrião','Telefone','Endereço','Nº Casa','Bairro','Sexo','Idade','Intenção de Voto','Adesivamento','Qtd Moradores','Moradores','Observação','Líder','Coordenador','Data Cadastro'];
+      const letras='ABCDEFGHIJKLMNOP'.split('');
+      cols5.forEach((h,i)=>{ws[letras[i]+'5']={v:h,s:S.col,t:'s'};});
+      cads.forEach((c,i)=>{
+        const r=6+i;let mrs=[];
+        if(c.moradores){try{mrs=typeof c.moradores==='string'?JSON.parse(c.moradores):c.moradores;}catch{}}
+        const base=i%2===0?S.par:S.impar;
+        const vals=[i+1,c.anfitriao||'',c.telefone||'',c.endereco||'',c.numero_casa||'',c.bairro||'',c.sexo||'',c.idade?Number(c.idade):'',c.intencao_voto||'',c.adesivamento||'',Number(c.qtd_moradores||1),mrs.map(m=>m.nome).filter(Boolean).join(', ')||'',c.observacao||'',c.agente_nome||c.cadastrado_por||'',c.coord_nome||'',c.criado_em?new Date(c.criado_em).toLocaleString('pt-BR'):''];
+        vals.forEach((v,j)=>{
+          const addr=letras[j]+r;const sty=(j===0)?(i%2===0?S.num:S.numI):((j===8||j===9)?S.status:base);
+          ws[addr]={v,s:sty,t:typeof v==='number'?'n':'s'};
+        });
+      });
+      ws['!ref']=XLSX.utils.encode_range({s:{r:0,c:0},e:{r:5+cads.length,c:15}});
+      ws['!cols']=[{wch:5},{wch:28},{wch:16},{wch:22},{wch:8},{wch:18},{wch:7},{wch:7},{wch:22},{wch:16},{wch:10},{wch:28},{wch:24},{wch:24},{wch:20},{wch:18}];
+      ws['!rows']=[{hpt:22},{hpt:18},{hpt:16},{hpt:8},{hpt:22}];
+      XLSX.utils.book_append_sheet(wb,ws,'Todos os Cadastros');
+    })();
+
+    (function(){
+      const ws={};const agentes=users.filter(u=>u.role==='campo');
+      const contagem={};cads.forEach(c=>{contagem[c.cadastrado_por]=(contagem[c.cadastrado_por]||0)+1;});
+      const now=new Date().toLocaleDateString('pt-BR');
+      ws['A1']={v:'LÍDERES DE CAMPO — '+now,s:S.hdrTitulo,t:'s'};ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:5}}];
+      ['#','Nome','Usuário','Status','Coordenador','Qtd Cadastros','Cadastrado em'].forEach((h,i)=>{ws['ABCDEFG'[i]+'2']={v:h,s:S.col,t:'s'};});
+      agentes.forEach((u,i)=>{
+        const r=3+i;const base=i%2===0?S.par:S.impar;
+        const vals=[i+1,u.nome,u.usuario,u.ativo?'Ativo':'Inativo',u.coordenador_nome||'—',contagem[u.usuario]||0,u.criado_em?new Date(u.criado_em).toLocaleDateString('pt-BR'):''];
+        'ABCDEFG'.split('').forEach((l,j)=>{const sty=(j===0)?(i%2===0?S.num:S.numI):(j===3?S.status:base);ws[l+r]={v:vals[j],s:sty,t:typeof vals[j]==='number'?'n':'s'};});
+      });
+      ws['!ref']=XLSX.utils.encode_range({s:{r:0,c:0},e:{r:2+agentes.length,c:6}});
+      ws['!cols']=[{wch:5},{wch:28},{wch:16},{wch:14},{wch:24},{wch:14},{wch:16}];
+      ws['!rows']=[{hpt:22},{hpt:20}];
+      XLSX.utils.book_append_sheet(wb,ws,'Líderes de Campo');
+    })();
+
+    (function(){
+      const ws={};const bairroMap={};cads.forEach(c=>{const b=c.bairro||'Não informado';bairroMap[b]=(bairroMap[b]||0)+1;});
+      const rows=Object.entries(bairroMap).sort((a,b)=>b[1]-a[1]);
+      ws['A1']={v:'CADASTROS POR BAIRRO',s:S.hdrTitulo,t:'s'};ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:2}}];
+      ['#','Bairro','Cadastros'].forEach((h,i)=>{ws['ABC'[i]+'2']={v:h,s:S.col,t:'s'};});
+      rows.forEach(([b,q],i)=>{const r=3+i;const base=i%2===0?S.par:S.impar;ws['A'+r]={v:i+1,s:i%2===0?S.num:S.numI,t:'n'};ws['B'+r]={v:b,s:base,t:'s'};ws['C'+r]={v:q,s:{...base,alignment:{horizontal:'center',vertical:'center'}},t:'n'};});
+      ws['!ref']=XLSX.utils.encode_range({s:{r:0,c:0},e:{r:2+rows.length,c:2}});ws['!cols']=[{wch:5},{wch:30},{wch:14}];ws['!rows']=[{hpt:22},{hpt:20}];
+      XLSX.utils.book_append_sheet(wb,ws,'Por Bairro');
+    })();
+
+    (function(){
+      const ws={};const votoMap={};cads.forEach(c=>{const v=c.intencao_voto||'Não informado';votoMap[v]=(votoMap[v]||0)+1;});
+      const rows=Object.entries(votoMap).sort((a,b)=>b[1]-a[1]);
+      ws['A1']={v:'INTENÇÃO DE VOTO',s:S.hdrTitulo,t:'s'};ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:2}}];
+      ['#','Intenção de Voto','Quantidade'].forEach((h,i)=>{ws['ABC'[i]+'2']={v:h,s:S.col,t:'s'};});
+      rows.forEach(([v,q],i)=>{const r=3+i;const base=i%2===0?S.par:S.impar;ws['A'+r]={v:i+1,s:i%2===0?S.num:S.numI,t:'n'};ws['B'+r]={v:v,s:base,t:'s'};ws['C'+r]={v:q,s:{...base,alignment:{horizontal:'center',vertical:'center'}},t:'n'};});
+      ws['!ref']=XLSX.utils.encode_range({s:{r:0,c:0},e:{r:2+rows.length,c:2}});ws['!cols']=[{wch:5},{wch:30},{wch:12}];ws['!rows']=[{hpt:22},{hpt:20}];
+      XLSX.utils.book_append_sheet(wb,ws,'Intenção de Voto');
+    })();
+
+    (function(){
+      const ws={};const adesMap={};cads.forEach(c=>{const v=c.adesivamento||'Não informado';adesMap[v]=(adesMap[v]||0)+1;});
+      const rows=Object.entries(adesMap).sort((a,b)=>b[1]-a[1]);
+      ws['A1']={v:'ADESIVAMENTO',s:S.hdrTitulo,t:'s'};ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:2}}];
+      ['#','Adesivamento','Quantidade'].forEach((h,i)=>{ws['ABC'[i]+'2']={v:h,s:S.col,t:'s'};});
+      rows.forEach(([v,q],i)=>{const r=3+i;const base=i%2===0?S.par:S.impar;ws['A'+r]={v:i+1,s:i%2===0?S.num:S.numI,t:'n'};ws['B'+r]={v:v,s:base,t:'s'};ws['C'+r]={v:q,s:{...base,alignment:{horizontal:'center',vertical:'center'}},t:'n'};});
+      ws['!ref']=XLSX.utils.encode_range({s:{r:0,c:0},e:{r:2+rows.length,c:2}});ws['!cols']=[{wch:5},{wch:30},{wch:12}];ws['!rows']=[{hpt:22},{hpt:20}];
+      XLSX.utils.book_append_sheet(wb,ws,'Adesivamento');
+    })();
+
+    const data=new Date().toLocaleDateString('pt-BR').replace(/\//g,'-');
+    XLSX.writeFile(wb,`Relatorio_Eleitoral_${data}.xlsx`);
+  }catch(e){alert('Erro ao gerar relatório: '+e.message);console.error(e);}
+  finally{btn.disabled=false;btn.innerHTML='📊 Gerar Relatório Excel';}
+}
+
+function carregarSheetJSPro(){
+  return new Promise((resolve,reject)=>{
+    if(window.XLSX){resolve();return;}
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js';
+    s.onload=resolve;
+    s.onerror=()=>{
+      const s2=document.createElement('script');
+      s2.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+      s2.onload=resolve;s2.onerror=()=>reject(new Error('Falha ao carregar SheetJS'));
+      document.head.appendChild(s2);
+    };
+    document.head.appendChild(s);
+  });
+}
+
+// ════════════════════════════════ MODAL CRIAR USUÁRIO
+let mRole='campo';
+function abrirModal(role){
+  mRole=role;
+  document.getElementById('m-nome').value='';
+  document.getElementById('m-usuario').value='';
+  document.getElementById('m-senha').value='';
+  document.getElementById('m-role').value=role;
+  document.getElementById('modal-titulo').textContent=role==='coord'?'🧑‍💼 Novo Coordenador':'🚶 Novo Líder de Campo';
+  document.getElementById('modal-error').style.display='none';
+  document.getElementById('modal-usuario').style.display='flex';
+}
+async function criarUsuario(){
+  const nome=document.getElementById('m-nome').value.trim();
+  const usuario=document.getElementById('m-usuario').value.trim();
+  const senha=document.getElementById('m-senha').value;
+  const role=document.getElementById('m-role').value;
+  const err=document.getElementById('modal-error');
+  if(!nome||!usuario||!senha){err.textContent='❌ Preencha todos os campos';err.style.display='block';return;}
+  if(senha.length<6){err.textContent='❌ Senha mínima 6 caracteres';err.style.display='block';return;}
+  try{
+    await req('POST','/usuarios',{nome,usuario,senha,role});
+    fecharModal();
+    if(role==='coord')carregarUsers('coord');else carregarUsers('campo');
+  }catch(e){err.textContent='❌ '+e.message;err.style.display='block';}
+}
+function fecharModal(){document.getElementById('modal-usuario').style.display='none';}
+
+// ════════════════════════════════ MORADORES
+function renderMoradores(){
+  const qtd=parseInt(document.getElementById('f-qtd')?.value||1);
+  const c=document.getElementById('moradores-container');if(!c)return;
+  c.innerHTML=Array.from({length:qtd},(_,i)=>`
+    <div class="morador-card">
+      <div class="morador-title">👤 Morador ${i+1}</div>
+      <div class="form-group"><label class="form-label">Nome</label><input type="text" id="mr-n-${i}" class="form-input" placeholder="Nome completo"></div>
+      <div class="form-row">
+        <div><label class="form-label">Sexo</label>
+          <select id="mr-s-${i}" class="form-select"><option value="">Selecione</option><option value="M">Masculino</option><option value="F">Feminino</option><option value="Outro">Outro</option></select>
+        </div>
+        <div><label class="form-label">Idade</label><input type="number" id="mr-i-${i}" class="form-input" placeholder="Anos" min="0" max="120"></div>
+      </div>
+      <div class="form-row">
+        <div><label class="form-label">Telefone</label><input type="tel" id="mr-t-${i}" class="form-input" placeholder="(99) 99999-9999"></div>
+        <div><label class="form-label">Parentesco</label>
+          <select id="mr-p-${i}" class="form-select"><option value="">Selecione</option><option value="Filho(a)">Filho(a)</option><option value="Cônjuge">Cônjuge</option><option value="Pai/Mãe">Pai/Mãe</option><option value="Irmão(ã)">Irmão(ã)</option><option value="Outro">Outro</option></select>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+// ════════════════════════════════ VOTO / ADESIVAMENTO
+function selecionarVoto(btn,val){
+  document.querySelectorAll('#voto-grid .voto-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById('f-voto-outro-wrap').style.display=val==='Outro'?'block':'none';
+  if(val!=='Outro')document.getElementById('f-voto').value=val;
+}
+function selecionarAdesivamento(btn,val){
+  document.querySelectorAll('#adesivamento-grid .voto-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById('f-adesivamento').value=val;
+}
+
+// ════════════════════════════════ SALVAR CADASTRO
+async function salvarCadastro(){
+  const errEl=document.getElementById('f-error');
+  const sucEl=document.getElementById('f-success');
+  const btn=document.getElementById('btn-salvar');
+  errEl.style.display='none';sucEl.style.display='none';
+
+  const anfitriao=document.getElementById('f-anfitriao').value.trim();
+  if(!anfitriao){errEl.textContent='❌ Nome do anfitrião é obrigatório';errEl.style.display='block';return;}
+
+  const qtd=parseInt(document.getElementById('f-qtd').value);
+  const moradores=Array.from({length:qtd},(_,i)=>({
+    nome:document.getElementById('mr-n-'+i)?.value.trim()||'',
+    sexo:document.getElementById('mr-s-'+i)?.value||'',
+    idade:document.getElementById('mr-i-'+i)?.value||'',
+    tel:document.getElementById('mr-t-'+i)?.value.trim()||'',
+    parentesco:document.getElementById('mr-p-'+i)?.value||'',
+  }));
+
+  const payload={
+    anfitriao,
+    telefone:document.getElementById('f-telefone').value.trim(),
+    idade:document.getElementById('f-idade').value||null,
+    endereco:document.getElementById('f-endereco').value.trim(),
+    numero_casa:document.getElementById('f-numero').value.trim(),
+    bairro:document.getElementById('f-bairro').value.trim(),
+    sexo:document.getElementById('f-sexo').value,
+    intencao_voto:document.getElementById('f-voto').value||null,
+    obs_voto:document.getElementById('f-obs-voto').value.trim(),
+    adesivamento:document.getElementById('f-adesivamento').value||null,
+    qtd_moradores:qtd,
+    moradores:JSON.stringify(moradores),
+    observacao:document.getElementById('f-obs').value.trim(),
+  };
+
+  btn.disabled=true;btn.innerHTML='<span class="spinner" style="border-top-color:var(--azul)"></span> Salvando…';
+  try{
+    await req('POST','/cadastros',payload);
+    sucEl.textContent='✅ Cadastro salvo com sucesso!';sucEl.style.display='block';
+    // Limpar formulário
+    document.getElementById('f-anfitriao').value='';document.getElementById('f-telefone').value='';
+    document.getElementById('f-idade').value='';document.getElementById('f-endereco').value='';
+    document.getElementById('f-numero').value='';document.getElementById('f-bairro').value='';
+    document.getElementById('f-sexo').value='';document.getElementById('f-voto').value='';
+    document.getElementById('f-obs-voto').value='';document.getElementById('f-adesivamento').value='';
+    document.getElementById('f-qtd').value='1';document.getElementById('f-obs').value='';
+    document.getElementById('f-voto-outro-wrap').style.display='none';
+    document.querySelectorAll('.voto-btn').forEach(b=>b.classList.remove('selected'));
+    renderMoradores();
+    setTimeout(()=>{sucEl.style.display='none';},4000);
+  }catch(e){errEl.textContent='❌ '+e.message;errEl.style.display='block';}
+  finally{btn.disabled=false;btn.innerHTML='💾 Salvar Cadastro';}
+}
+
+// ════════════════════════════════ UTILITÁRIO
+function vazio(texto){
+  return`<div class="empty"><div class="empty-icon">📭</div><div class="empty-text">${texto||'Nenhum dado'}</div></div>`;
+}
+
+// ════════════════════════════════ INIT
+// DEV MODE: exibe o botão flutuante apenas se DEV_MODE estiver ativo
+document.getElementById('dev-fab').style.display=DEV_MODE?'flex':'none';
+
+(async function init(){
+  ping();
+  if(TK){
+    try{
+      const d=await req('GET','/me');ME=d;
+      if(ME.trocarSenha){abrirTrocaSenhaObrigatoria();}else{rota();}
+    }catch{TK=null;ME=null;sessionStorage.removeItem('token');}
+  }
+})();
+</script>
+</body>
+</html>
