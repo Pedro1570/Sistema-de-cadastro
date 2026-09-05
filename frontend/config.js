@@ -1,10 +1,3 @@
-/**
- * ════════════════════════════════════════════════════════════
- * CONFIGURAÇÃO DO FRONTEND
- * Detecta ambiente automaticamente (dev/prod/emulador)
- * ════════════════════════════════════════════════════════════
- */
-
 (function() {
   const hostname = window.location.hostname;
   const protocol = window.location.protocol;
@@ -12,7 +5,7 @@
   let apiUrl;
   let environment;
 
-  // Detectar ambiente automaticamente
+ 
   if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0') {
     apiUrl = 'http://localhost:3000';
     environment = 'development';
@@ -22,13 +15,13 @@
     environment = 'emulator';
     console.log('🟠 EMULADOR ANDROID: 10.0.2.2:3000');
   } else {
-    // MUDE AQUI PARA SEU IP/DOMÍNIO
+  
     apiUrl = window.location.origin;
     environment = 'production';
     console.log('🟢 PRODUÇÃO: ' + apiUrl);
   }
 
-  // Configuração global
+  
   window.CONFIG = {
     apiUrl: apiUrl,
     isDevelopment: environment === 'development',
@@ -46,7 +39,7 @@
     apiUrl: window.CONFIG.apiUrl
   });
 
-  // Testar conexão
+ 
   testConnection();
 
   async function testConnection() {
